@@ -1,60 +1,80 @@
-var alt = ('../alt');
-var LocationActions = require('LocationActions');
+var alt = require('../alt');
+var LocationActions = require('../actions/LocationActions');
+var LocationSource = require('../sources/LocationSource');
+var FavoritesStore = require('./FavoritesStore');
 
 class LocationStore {
-	constructor() {
-		this.locations = [];
-		this.errorMessage = null;
+  constructor() {
+    this.locations = [];
+    this.errorMessage = null;
 
-		this.bindListeners({
-			handleUpdateLocations: LocationActions.UPDATE_LOCATIONS,
-			handleFetchLocations: LocationActions.FETCH_LOCATIONS,
-      		handleLocationsFailed: LocationActions.LOCATIONS_FAILED,
-      		setFavorites: LocationActions.FAVORITE_LOCATION
-		});
-	}
+    this.bindListeners({
+      handleUpdateLocations: LocationActions.UPDATE_LOCATIONS,
+      handleFetchLocations: LocationActions.FETCH_LOCATIONS,
+      handleLocationsFailed: LocationActions.LOCATIONS_FAILED,
+      setFavorites: LocationActions.FAVORITE_LOCATION
+    });
 
-	handleUpdateLocations(locations) {
-		this.locations = locations;
-		this.errorMessage = null;
-	}
+    this.exportPublicMethods({
+      getLocation: this.getLocation
+    });
 
-	handleFetchLocations() {
-		this.locations = [];
-	}
+    this.exportAsync(LocationSource);
+  }
 
-	handleLocationsFailed(errorMessage) {
-	    this.errorMessage = errorMessage;
-	}
+  handleUpdateLocations(locations) {
+    this.locations = locations;
+    this.errorMessage = null;
+  }
 
-	resetAllFavorites() {
-	  this.locations = this.locations.map((location) => {
-	    return {
-	      id: location.id,
-	      name: location.name,
-	      has_favorite: false
-	    };
-	  });
-	}
+  handleFetchLocations() {
+    this.locations = [];
+  }
 
-	setFavorites(location) {
-	  this.waitFor(FavoritesStore);
+  handleLocationsFailed(errorMessage) {
+    this.errorMessage = errorMessage;
+  }
 
-	  var favoritedLocations = FavoritesStore.getState().locations;
+  resetAllFavorites() {
+    this.locations = this.locations.map((location) => {
+      return {
+        id: location.id,
+        name: location.name,
+        has_favorite: false
+      };
+    });
+  }
 
-	  this.resetAllFavorites();
+  setFavorites(location) {
+    this.waitFor(FavoritesStore);
 
-	  favoritedLocations.forEach((location) => {
-	    for (var i = 0; i < this.locations.length; i += 1) {
+    var favoritedLocations = FavoritesStore.getState().locations;
 
-	      if (this.locations[i].id === location.id) {
-	        this.locations[i].has_favorite = true;
-	        break;
-	      }
-	    }
-	  });
-	}
+    this.resetAllFavorites();
 
+    favoritedLocations.forEach((location) => {
+      // find each location in the array
+      for (var i = 0; i < this.locations.length; i += 1) {
+
+        // set has_favorite to true
+        if (this.locations[i].id === location.id) {
+          this.locations[i].has_favorite = true;
+          break;
+        }
+      }
+    });
+  }
+
+  getLocation(id) {
+    var { locations } = this.getState();
+    for (var i = 0; i < locations.length; i += 1) {
+      if (locations[i].id === id) {
+        return locations[i];
+      }
+    }
+
+    return null;
+  }
 }
 
 module.exports = alt.createStore(LocationStore, 'LocationStore');
