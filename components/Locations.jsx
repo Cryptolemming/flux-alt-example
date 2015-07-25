@@ -8,6 +8,8 @@ var Locations = React.createClass({
 
 	componentDidMount() {
 		LocationStore.listen(this.onChange);
+
+		LocationActions.fetchLocations();
 	},
 
 	componentWillUnmount() {
@@ -20,14 +22,26 @@ var Locations = React.createClass({
 
 	render() {
 		return (
+			if (this.state.errorMessage) {
+			    return (
+			      <div>Something is wrong</div>
+			    );
+			  }
+
+			  if (!this.state.locations.length) {
+			    return (
+			      <div>Loading</div>
+			    );
+			  }
+
 			<ul>
 				{this.state.locations.map(locations => {
 					return (
 						<li>{location.name}</li>
-					),
-				});
+					);
+				})}
 			</ul>
-		),
-	};
+		);
+	}
 });
 
